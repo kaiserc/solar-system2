@@ -1,0 +1,884 @@
+/* ==========================================================================
+   COSMIC ORRERY // PREMIUM SCI-FI HUD DESIGN SYSTEM
+   ========================================================================== */
+
+/* ===== CSS CUSTOM PROPERTIES (TOKENS) ===== */
+:root {
+    --bg-darkest: #020208;
+    --bg-panel: rgba(5, 5, 15, 0.75);
+    --border-glow: rgba(0, 243, 255, 0.2);
+    --neon-cyan: #00f3ff;
+    --neon-blue: #0088ff;
+    --neon-amber: #ffaa00;
+    --neon-red: #ff3b30;
+    --neon-green: #34c759;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.4);
+    --glass-blur: blur(25px);
+    --hud-border: 1px solid rgba(0, 243, 255, 0.15);
+    --font-sci: 'Orbitron', 'Courier New', monospace;
+    --font-std: 'Inter', system-ui, -apple-system, sans-serif;
+    --transition-fast: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --transition-slow: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===== RESET & ROOT ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body {
+    background-color: var(--bg-darkest);
+    overflow: hidden;
+    font-family: var(--font-std);
+    color: var(--text-primary);
+    height: 100vh;
+    width: 100vw;
+}
+
+/* ===== 3D CANVAS CONTAINER ===== */
+#canvas-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* ===== UI HUD OVERLAY CONTAINER ===== */
+.ui-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.ui-hud * {
+    pointer-events: auto; /* Enable clicks on HUD elements */
+}
+
+/* ===== HUD LABELS & INDICATORS ===== */
+.hud-label {
+    display: block;
+    font-family: var(--font-sci);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--neon-cyan);
+    margin-bottom: 8px;
+    text-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
+}
+
+/* ===== HEADER DIAGNOSTICS (TOP HUD) ===== */
+.hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(2, 2, 8, 0.8) 0%, rgba(2, 2, 8, 0) 100%);
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.system-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sci);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.status-indicator.online {
+    background-color: var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green);
+    animation: pulse 1.5s infinite;
+}
+
+.status-text {
+    color: var(--text-secondary);
+}
+
+.hud-title {
+    font-family: var(--font-sci);
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+    margin-left: 20px;
+}
+
+.time-readout {
+    font-family: var(--font-sci);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    color: var(--neon-cyan);
+}
+
+/* ===== TELEMETRY SIDEBAR (RIGHT SLIDE-OUT PANEL) ===== */
+.telemetry-sidebar {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    bottom: 150px;
+    width: 380px;
+    background: var(--bg-panel);
+    backdrop-filter: var(--glass-blur);
+    border: var(--hud-border);
+    border-left: 3px solid var(--neon-cyan);
+    border-radius: 12px;
+    padding: 25px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5), 
+                inset 0 0 20px rgba(0, 243, 255, 0.05);
+    transform: translateX(0);
+    transition: var(--transition-slow);
+    z-index: 200;
+}
+
+.telemetry-sidebar.closed {
+    transform: translateX(420px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 18px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.sidebar-close-btn:hover {
+    color: var(--neon-red);
+    transform: scale(1.1);
+}
+
+.sidebar-header {
+    border-bottom: 1px solid rgba(0, 243, 255, 0.15);
+    padding-bottom: 15px;
+}
+
+.telemetry-label {
+    font-family: var(--font-sci);
+    font-size: 0.65rem;
+    letter-spacing: 1.5px;
+    color: var(--neon-cyan);
+    opacity: 0.8;
+}
+
+#sidebar-title {
+    font-family: var(--font-sci);
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-top: 5px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+#sidebar-emoji {
+    font-size: 1.4rem;
+}
+
+.classification {
+    font-family: var(--font-sci);
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--neon-amber);
+    background: rgba(255, 170, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 170, 0, 0.2);
+}
+
+.sidebar-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-right: 5px;
+}
+
+/* Custom Scrollbar for Diagnostics Sidebar */
+.sidebar-scrollable::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar-scrollable::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+.sidebar-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(0, 243, 255, 0.2);
+    border-radius: 2px;
+}
+.sidebar-scrollable::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-cyan);
+}
+
+.sidebar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar-section h3 {
+    font-family: var(--font-sci);
+    font-size: 0.75rem;
+    letter-spacing: 1.5px;
+    color: var(--neon-blue);
+    border-left: 2px solid var(--neon-blue);
+    padding-left: 8px;
+}
+
+/* HOLOGRAM WIREFRAME PREVIEW */
+.hologram-viewport {
+    width: 100%;
+    height: 120px;
+    background: rgba(0, 243, 255, 0.02);
+    border: 1px dashed rgba(0, 243, 255, 0.15);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hologram-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px dashed rgba(0, 243, 255, 0.15);
+}
+
+.hologram-circle.outer {
+    width: 90px;
+    height: 90px;
+    animation: rotateCW 10s linear infinite;
+}
+
+.hologram-circle.inner {
+    width: 70px;
+    height: 70px;
+    border: 1px dotted rgba(0, 243, 255, 0.25);
+    animation: rotateCCW 6s linear infinite;
+}
+
+.hologram-planet {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(0, 243, 255, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
+    border: 1px solid rgba(0, 243, 255, 0.4);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+}
+
+.planet-wire {
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background: rgba(0, 243, 255, 0.3);
+    animation: sweepPlanet 1.5s ease-in-out infinite alternate;
+}
+
+.scanning-text {
+    position: absolute;
+    bottom: 8px;
+    font-family: var(--font-sci);
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    color: var(--neon-cyan);
+    opacity: 0.6;
+    animation: blinkText 1.5s ease infinite;
+}
+
+/* TELEMETRY DATA GRID */
+.telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.telemetry-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: var(--transition-fast);
+}
+
+.telemetry-item:hover {
+    background: rgba(0, 243, 255, 0.03);
+    border-color: rgba(0, 243, 255, 0.15);
+}
+
+.item-label {
+    font-family: var(--font-sci);
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+.item-value {
+    font-family: var(--font-sci);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.data-paragraph {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.fun-fact-box {
+    background: linear-gradient(90deg, rgba(255, 170, 0, 0.08), transparent);
+    border-left: 2px solid var(--neon-amber);
+    padding: 12px 15px;
+    border-radius: 0 8px 8px 0;
+}
+
+.fun-fact-box h4 {
+    font-family: var(--font-sci);
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    color: var(--neon-amber);
+    margin-bottom: 5px;
+}
+
+.fun-fact-box p {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* ===== LEFT TOOLBAR (AUDIO & CONTROLS) ===== */
+.instructions-hud {
+    position: fixed;
+    top: 90px;
+    left: 20px;
+    background: var(--bg-panel);
+    backdrop-filter: var(--glass-blur);
+    border: var(--hud-border);
+    border-radius: 8px;
+    padding: 15px;
+    font-family: var(--font-sci);
+    width: 200px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.instructions-hud p {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.instructions-hud p span {
+    color: var(--neon-cyan);
+    font-weight: 600;
+}
+
+.toolbar-left {
+    position: fixed;
+    top: 240px;
+    left: 20px;
+    background: var(--bg-panel);
+    backdrop-filter: var(--glass-blur);
+    border: var(--hud-border);
+    border-radius: 8px;
+    padding: 18px 15px;
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.toolbar-left button {
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-sci);
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: #fff;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.toolbar-left button:hover {
+    background: rgba(0, 243, 255, 0.08);
+    border-color: rgba(0, 243, 255, 0.3);
+    color: var(--neon-cyan);
+}
+
+.toolbar-left button.active {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 243, 255, 0.1);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.15);
+}
+
+/* Volume Slider in HUD */
+.volume-slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 5px;
+}
+
+.volume-slider-container label {
+    font-family: var(--font-sci);
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+#volume-slider {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+}
+
+#volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: var(--neon-cyan);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 6px var(--neon-cyan);
+}
+
+.toolbar-left .action-btn {
+    border-color: var(--neon-blue);
+    background: rgba(0, 102, 255, 0.05);
+    color: var(--neon-blue);
+    font-weight: 600;
+}
+
+.toolbar-left .action-btn:hover {
+    background: rgba(0, 102, 255, 0.15);
+    border-color: var(--neon-blue);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(0, 102, 255, 0.3);
+}
+
+/* ===== BOTTOM NAVIGATION DOCK ===== */
+.hud-bottom-dock {
+    width: calc(100% - 40px);
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    pointer-events: none;
+}
+
+/* Time Simulation HUD */
+.time-controls-panel {
+    background: var(--bg-panel);
+    backdrop-filter: var(--glass-blur);
+    border: var(--hud-border);
+    border-radius: 8px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+}
+
+.pause-btn {
+    background: linear-gradient(135deg, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0.05));
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    color: #fff;
+    font-family: var(--font-sci);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.pause-btn:hover {
+    background: rgba(255, 59, 48, 0.25);
+    border-color: var(--neon-red);
+    box-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
+}
+
+.pause-btn.paused {
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.2), rgba(52, 199, 89, 0.05));
+    border-color: var(--neon-green);
+}
+
+.pause-btn.paused:hover {
+    background: rgba(52, 199, 89, 0.3);
+    border-color: var(--neon-green);
+    box-shadow: 0 0 10px rgba(52, 199, 89, 0.3);
+}
+
+.slider-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.slider-wrapper label {
+    font-family: var(--font-sci);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+#speed-slider {
+    width: 100px;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    outline: none;
+}
+
+#speed-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--neon-cyan);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--neon-cyan);
+}
+
+#speed-value {
+    font-family: var(--font-sci);
+    color: var(--neon-cyan);
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 32px;
+}
+
+/* Planet Navigation HUD Dock */
+.planet-nav-hud {
+    flex: 1;
+    background: var(--bg-panel);
+    backdrop-filter: var(--glass-blur);
+    border: var(--hud-border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
+}
+
+.nav-title {
+    font-family: var(--font-sci);
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+}
+
+.planet-nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 6px 0;
+    color: var(--text-secondary);
+    font-family: var(--font-sci);
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.nav-btn:hover {
+    transform: translateY(-2px);
+    color: #fff;
+}
+
+/* Color themed buttons for navigation */
+.nav-btn.sun-color:hover, .nav-btn.sun-color.active {
+    border-color: #ffaa00; background: rgba(255, 170, 0, 0.15); box-shadow: 0 0 10px rgba(255, 170, 0, 0.3); color: #ffaa00;
+}
+.nav-btn.mercury-color:hover, .nav-btn.mercury-color.active {
+    border-color: #a0a0a0; background: rgba(160, 160, 160, 0.15); box-shadow: 0 0 10px rgba(160, 160, 160, 0.3); color: #fff;
+}
+.nav-btn.venus-color:hover, .nav-btn.venus-color.active {
+    border-color: #e6b47a; background: rgba(230, 180, 122, 0.15); box-shadow: 0 0 10px rgba(230, 180, 122, 0.3); color: #e6b47a;
+}
+.nav-btn.earth-color:hover, .nav-btn.earth-color.active {
+    border-color: #00f3ff; background: rgba(0, 243, 255, 0.15); box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); color: #00f3ff;
+}
+.nav-btn.mars-color:hover, .nav-btn.mars-color.active {
+    border-color: #ff3b30; background: rgba(255, 59, 48, 0.15); box-shadow: 0 0 10px rgba(255, 59, 48, 0.3); color: #ff5e52;
+}
+.nav-btn.jupiter-color:hover, .nav-btn.jupiter-color.active {
+    border-color: #d4a76a; background: rgba(212, 167, 106, 0.15); box-shadow: 0 0 10px rgba(212, 167, 106, 0.3); color: #d4a76a;
+}
+.nav-btn.saturn-color:hover, .nav-btn.saturn-color.active {
+    border-color: #fce77d; background: rgba(252, 231, 125, 0.15); box-shadow: 0 0 10px rgba(252, 231, 125, 0.3); color: #fce77d;
+}
+.nav-btn.uranus-color:hover, .nav-btn.uranus-color.active {
+    border-color: #7ec8d9; background: rgba(126, 200, 217, 0.15); box-shadow: 0 0 10px rgba(126, 200, 217, 0.3); color: #7ec8d9;
+}
+.nav-btn.neptune-color:hover, .nav-btn.neptune-color.active {
+    border-color: #0088ff; background: rgba(0, 136, 255, 0.15); box-shadow: 0 0 10px rgba(0, 136, 255, 0.3); color: #0088ff;
+}
+
+/* ===== COSMIC LOADING SCREEN ===== */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-darkest);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.logo-text {
+    font-family: var(--font-sci);
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 12px;
+    color: #fff;
+    text-shadow: 0 0 25px rgba(0, 243, 255, 0.7);
+    animation: pulseGlow 3s infinite alternate;
+}
+
+.spinner-glow {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 1px dashed rgba(0, 243, 255, 0.2);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.05);
+}
+
+.spinner-glow::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--neon-cyan);
+    box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+.orbiting-dot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--neon-blue);
+    box-shadow: 0 0 10px var(--neon-blue);
+    offset-path: path('M 50, 0 A 50,50 0 1,1 49.9,0');
+    animation: orbitLoading 2s linear infinite;
+}
+
+.loading-status {
+    font-family: var(--font-sci);
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    color: var(--neon-cyan);
+    opacity: 0.8;
+    animation: blinkText 1s infinite alternate;
+}
+
+/* ===== KEYFRAMES ANIMATIONS ===== */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.6; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulseGlow {
+    from { text-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
+    to { text-shadow: 0 0 25px rgba(0, 243, 255, 0.8), 0 0 45px rgba(0, 136, 255, 0.4); }
+}
+
+@keyframes orbitLoading {
+    100% { offset-distance: 100%; }
+}
+
+@keyframes rotateCW {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes rotateCCW {
+    to { transform: rotate(-360deg); }
+}
+
+@keyframes sweepPlanet {
+    0% { transform: translateY(-16px); opacity: 0.1; }
+    50% { opacity: 0.9; }
+    100% { transform: translateY(16px); opacity: 0.1; }
+}
+
+@keyframes blinkText {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.9; }
+}
+
+/* ===== RESPONSIVE HUD MEDIA QUERIES ===== */
+@media (max-width: 1024px) {
+    .telemetry-sidebar {
+        width: 320px;
+        bottom: 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    .ui-hud {
+        padding: 10px;
+    }
+    
+    .hud-title {
+        font-size: 1rem;
+        letter-spacing: 4px;
+    }
+    
+    .system-status {
+        display: none;
+    }
+    
+    .instructions-hud {
+        display: none;
+    }
+    
+    .toolbar-left {
+        top: 60px;
+        left: 10px;
+        width: 160px;
+        padding: 10px;
+    }
+    
+    .telemetry-sidebar {
+        left: 10px;
+        right: 10px;
+        top: auto;
+        bottom: 170px;
+        width: calc(100% - 20px);
+        height: 250px;
+        transform: translateY(0);
+    }
+    
+    .telemetry-sidebar.closed {
+        transform: translateY(320px);
+        opacity: 0;
+    }
+    
+    .hud-bottom-dock {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .time-controls-panel {
+        padding: 10px;
+        justify-content: space-between;
+    }
+    
+    .planet-nav-hud {
+        padding: 10px;
+    }
+    
+    .planet-nav-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+        flex: auto;
+        width: 23%;
+        margin-bottom: 4px;
+        padding: 4px 0;
+    }
+}
